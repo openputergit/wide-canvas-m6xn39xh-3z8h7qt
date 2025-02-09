@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthCare Assistant</title>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body x-data="{
+    darkMode: false,
+    isLoggedIn: false,
+    showLogin: true,
+    showRegister: false,
+    showChat: false,
+    loading: false,
+    messages: [],
+    newMessage: '',
+    userData: {
+        name: '',
+        age: '',
+        phone: '',
+        bloodGroup: '',
+        email: '',
+        password: ''
+    },
+    bloodTestData: {
+        hemoglobin: '',
+        wbc: '',
+        rbc: '',
+        platelets: '',
+        glucose: ''
+    },
+    hospitals: [
+        {name: 'City Hospital', distance: '2.5km', rating: 4.5},
+        {name: 'Medicare Centre', distance: '3.8km', rating: 4.2},
+        {name: 'Health First', distance: '1.2km', rating: 4.8}
+    ],
+    async sendMessage() {
+        if (!this.newMessage.trim()) return;
+        
+        this.loading = true;
+        this.messages.push({role: 'user', content: this.newMessage});
+        
+        try {
+            const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer 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'
+                },
+                body: JSON.stringify({
+                    model: 'llama-3.3-70b-versatile',
+                    messages: [{role: 'user', content: this.newMessage}]
+                })
+            });
+            
+            const data = await response.json();
+            this.messages.push({role: 'assistant', content: data.choices[0].message.content});
+        } catch (error) {
+            console.error('Error:', error);
+            this.messages.push({role: 'assistant', content: 'Sorry, there was an error processing your request.'});
+        }
+        
+        this.loading = false;
+        this.newMessage = '';
+    },
+    handleLogin() {
+        // Simulate login
+        this.isLoggedIn = true;
+        this.showChat = true;
+    },
+    handleRegister() {
+        // Store user data and login
+        localStorage.setItem('userData', JSON.stringify(this.userData));
+        this.isLoggedIn = true;
+        this.showChat = true;
+    }
+}" :class="{'dark': darkMode}">
+
+<div class="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors duration-200">
+    <!-- Navigation -->
+    <nav class="bg-white dark:bg-gray-800 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-semibold text-blue-600 dark:text-blue-400">HealthCare Assistant</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button @click="darkMode = !darkMode" class="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700">
+                        <i class="bi" :class="darkMode ? 'bi-sun' : 'bi-moon'"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Authentication Forms -->
+        <template x-if="!isLoggedIn">
+            <div class="max-w-md mx-auto">
+                <!-- Login Form -->
+                <template x-if="showLogin">
+                    <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Login</h2>
+                        <input type="email" placeholder="Email" x-model="userData.email" class="w-full mb-4 p-2 border rounded">
+                        <input type="password" placeholder="Password" x-model="userData.password" class="w-full mb-4 p-2 border rounded">
+                        <button @click="handleLogin()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Login</button>
+                        <p class="mt-4 text-center dark:text-white">
+                            Don't have an account? 
+                            <button @click="showLogin = false; showRegister = true" class="text-blue-600 dark:text-blue-400">Register</button>
+                        </p>
+                    </div>
+                </template>
+
+                <!-- Register Form -->
+                <template x-if="showRegister">
+                    <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-lg">
+                        <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-white">Register</h2>
+                        <input type="text" placeholder="Full Name" x-model="userData.name" class="w-full mb-4 p-2 border rounded">
+                        <input type="number" placeholder="Age" x-model="userData.age" class="w-full mb-4 p-2 border rounded">
+                        <input type="tel" placeholder="Phone Number" x-model="userData.phone" class="w-full mb-4 p-2 border rounded">
+                        <select x-model="userData.bloodGroup" class="w-full mb-4 p-2 border rounded">
+                            <option value="">Select Blood Group</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                        </select>
+                        <input type="email" placeholder="Email" x-model="userData.email" class="w-full mb-4 p-2 border rounded">
+                        <input type="password" placeholder="Password" x-model="userData.password" class="w-full mb-4 p-2 border rounded">
+                        <button @click="handleRegister()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Register</button>
+                        <p class="mt-4 text-center dark:text-white">
+                            Already have an account? 
+                            <button @click="showLogin = true; showRegister = false" class="text-blue-600 dark:text-blue-400">Login</button>
+                        </p>
+                    </div>
+                </template>
+            </div>
+        </template>
+
+        <!-- Main App Interface -->
+        <template x-if="isLoggedIn">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Blood Test Form -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Blood Test Values</h3>
+                    <div class="space-y-4">
+                        <input type="number" placeholder="Hemoglobin (g/dL)" x-model="bloodTestData.hemoglobin" class="w-full p-2 border rounded">
+                        <input type="number" placeholder="WBC Count" x-model="bloodTestData.wbc" class="w-full p-2 border rounded">
+                        <input type="number" placeholder="RBC Count" x-model="bloodTestData.rbc" class="w-full p-2 border rounded">
+                        <input type="number" placeholder="Platelets" x-model="bloodTestData.platelets" class="w-full p-2 border rounded">
+                        <input type="number" placeholder="Glucose (mg/dL)" x-model="bloodTestData.glucose" class="w-full p-2 border rounded">
+                        <button @click="sendMessage()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Analyze Report</button>
+                    </div>
+                </div>
+
+                <!-- Chat Interface -->
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">AI Health Assistant</h3>
+                    <div class="h-96 overflow-y-auto mb-4 p-4 border rounded">
+                        <template x-for="message in messages" :key="message.content">
+                            <div :class="{'text-right': message.role === 'user'}" class="mb-4">
+                                <div :class="{'bg-blue-100 dark:bg-blue-900 ml-auto': message.role === 'user', 'bg-gray-100 dark:bg-gray-700': message.role === 'assistant'}"
+                                     class="inline-block p-3 rounded-lg max-w-[80%]">
+                                    <p x-text="message.content" class="text-gray-800 dark:text-white"></p>
+                                </div>
+                            </div>
+                        </template>
+                        <div x-show="loading" class="text-center">
+                            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent"></div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <input type="text" x-model="newMessage" @keydown.enter="sendMessage()" placeholder="Ask about your health..." 
+                               class="flex-1 p-2 border rounded">
+                        <button @click="sendMessage()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                            <i class="bi bi-send"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Nearby Hospitals -->
+                <div class="md:col-span-2 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Nearby Hospitals</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <template x-for="hospital in hospitals" :key="hospital.name">
+                            <div class="p-4 border rounded-lg dark:border-gray-700">
+                                <h4 x-text="hospital.name" class="font-semibold text-gray-800 dark:text-white"></h4>
+                                <p class="text-gray-600 dark:text-gray-400">
+                                    <i class="bi bi-geo-alt"></i>
+                                    <span x-text="hospital.distance"></span>
+                                </p>
+                                <div class="flex items-center mt-2">
+                                    <i class="bi bi-star-fill text-yellow-400"></i>
+                                    <span x-text="hospital.rating" class="ml-1 text-gray-600 dark:text-gray-400"></span>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+    }
+    
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 3px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+</style>
+
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
